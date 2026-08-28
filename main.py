@@ -8,7 +8,7 @@ from pathlib import Path
 from pypdf import PdfReader
 from docx import Document
 
-# vairbale from .env
+# Load environment variables from .env
 load_dotenv()
 
 # Getting API key from .env
@@ -104,7 +104,7 @@ Why FRND?
 
 💡 Solve Interesting Problems: Work in an environment where curiosity, experimentation, and first-principles thinking are encouraged.
 """
-# Defining Jod Description Schema
+# Defining Job Description Schema
 class JD(BaseModel):
     role:str
     required_skills:list[str]
@@ -115,7 +115,7 @@ class JD(BaseModel):
 
 jobd_schema=JD.model_json_schema()
 
-#System prompt to act as HR Assistant follwing the job description schema
+# System prompt to act as HR Assistant following the job description schema
 system_prompt=f"""
 Your a expert HR assistant, your job is to analyze job description and exract stturcture information from them.
 Return ONLY valid JSON matching schema:{jobd_schema}
@@ -154,7 +154,7 @@ answer=response.choices[0].message.content
 raw_json=answer
 # print(raw_json)
 
-# getting output into json
+# Deserializing JSON into a Pydantic object
 import json
 job_data=json.loads(raw_json)
 job=JD(**job_data)
@@ -163,11 +163,11 @@ job=JD(**job_data)
 # print(job.minimum_experience)
 
 # Parsing the  resume
-# 1. Getting maching schema
+# 1. Defining Match Result Schema
 class matchresult(BaseModel):
     score:float
     detail:dict
-# 2. Getting experience Schema
+# 2. Defining experience Schema
 class experience(BaseModel):
     company:str | None = None
     role:str | None = None
@@ -175,7 +175,7 @@ class experience(BaseModel):
     description:str | None = None
     skills_used:list[str] = []
 
-# 3. Getting resume schema
+# 3. Defining resume schema
 class resume(BaseModel):
     name:str | None=None
     email:str | None=None
@@ -286,7 +286,7 @@ def read_pdf(file_path):
             text+=page_text+"\n"
     return text
 
-# choosing between pdf/docs function based on input
+# Routing between PDF and DOCX parsers
 def read_resume(file_path):
     if file_path.suffix.lower()==".pdf":
         return read_pdf(file_path)
@@ -301,14 +301,14 @@ resume_folder=Path("resume")
 all_results=[] # for storing results
 for file_path in resume_folder.iterdir(): #iterating all files in the directory "resume" folder
     if file_path.suffix.lower() not in [".pdf",".docx"]:
-        continue                                            # Skipping if resume have other doc type then PDF/DOC
+        continue                                            # Skipping if resume have other doc type than PDF/DOC
     print("\nProcessing:",file_path.name)
     resume_text=read_resume(file_path)  #Choosing func based on doc type
-    parse_resume_result=parse_resume(resume_text) # LLM call for parsing the resume text(raw) into JSON
-    time.sleep(5) # Break to prevent API request rate 
+    parse_resume_result=parse_resume(resume_text) # LLM call to parse raw resume text into a validated Pydantic model
+    time.sleep(5) # Pause to avoid hitting API rate limits
     result=final_score(job,parse_resume_result) # Comparing parsed resume text (JSON) with JOB Description
-    time.sleep(5) # Break to prevent API request rate
-    print("Score:",result.score) #Priting final score individually
+    time.sleep(5) # Pause to avoid hitting API rate limits
+    print("Score:",result.score) # Print individual candidate score
     all_results.append({     #Storing all resume results
             "name":parse_resume_result.name,
             "score":result.score,
@@ -328,7 +328,7 @@ for candidate in top_2:
     print(
         candidate["detail"]
     )
-print("Bottom 2 Candidate") # Printing Results of Top 2
+print("Bottom 2 Candidate") # Printing Results of Bottom 2
 for candidate in bottom_2:
     print(
         candidate["name"],
