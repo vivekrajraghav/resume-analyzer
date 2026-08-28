@@ -3,7 +3,7 @@ import time
 import pypdf
 from dotenv import load_dotenv
 from groq import Groq
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from pathlib import Path
 from pypdf import PdfReader
 from docx import Document
@@ -115,7 +115,7 @@ class JD(BaseModel):
 
 jobd_schema=JD.model_json_schema()
 
-#System prompt to act as HR Assistant
+#System prompt to act as HR Assistant follwing the job description schema
 system_prompt=f"""
 Your a expert HR assistant, your job is to analyze job description and exract stturcture information from them.
 Return ONLY valid JSON matching schema:{jobd_schema}
@@ -128,7 +128,7 @@ if information for a list is missing return empty list
 Do not invent information
 Must return valid JSON
 """
-# User prompt
+# User prompt along with requirement of JSON format output
 user_prompt=f"""
 Analyse the following job description
 {job_description}
@@ -154,18 +154,20 @@ answer=response.choices[0].message.content
 raw_json=answer
 # print(raw_json)
 
+# getting output into json
 import json
 job_data=json.loads(raw_json)
 job=JD(**job_data)
-print(job.role)
-print(job.educational_requirements)
-print(job.minimum_experience)
+# print(job.role)
+# print(job.educational_requirements)
+# print(job.minimum_experience)
 
 # Parsing the  resume
+# 1. Getting maching schema
 class matchresult(BaseModel):
     score:float
     detail:dict
-
+# 2. Getting experience Schema
 class experience(BaseModel):
     company:str | None = None
     role:str | None = None
@@ -173,6 +175,7 @@ class experience(BaseModel):
     description:str | None = None
     skills_used:list[str] = []
 
+# 3. Getting resume schema
 class resume(BaseModel):
     name:str | None=None
     email:str | None=None
@@ -184,9 +187,9 @@ class resume(BaseModel):
     project:list[str]=[]
 resume_schema=resume.model_json_schema()
 
+# Function to calculate the score of resume against job description
 def final_score(job,resume):
     match_schema=matchresult.model_json_schema()
-
     prompt=f"""Youre a HR recruiter
     Compare Candiate's resume with the job description .
     Job Description:
@@ -215,6 +218,7 @@ def final_score(job,resume):
     response=client.chat.completions.create(model=model,messages=messages,response_format=response_format)
     data=json.loads(response.choices[0].message.content)
     return matchresult(**data)
+#  Parsing the resume into Schema from raw text
 def parse_resume(resume_text):
     system_prompt=f"""
     You are an expert resume parser
@@ -258,6 +262,7 @@ def parse_resume(resume_text):
     data=json.loads(raw_output)
     return resume(**data)
 
+# Function to read DOCX format resume into resume text(raw)
 def read_docx(file_path):
     document=Document(file_path)
     text=""
@@ -270,6 +275,8 @@ def read_docx(file_path):
                 if cell.text.strip():
                     text+=cell.text + "\n"
     return text
+
+# Getting resume text(raw) from PDF
 def read_pdf(file_path):
     reader=PdfReader(file_path)
     text=""
@@ -278,6 +285,8 @@ def read_pdf(file_path):
         if page_text:
             text+=page_text+"\n"
     return text
+
+# choosing between pdf/docs function based on input
 def read_resume(file_path):
     if file_path.suffix.lower()==".pdf":
         return read_pdf(file_path)
@@ -285,28 +294,31 @@ def read_resume(file_path):
         return read_docx(file_path)
     else:
         return None
+
+# Final Execution
+# getting resume folder Path
 resume_folder=Path("resume")
-all_results=[]
-for file_path in resume_folder.iterdir():
+all_results=[] # for storing results
+for file_path in resume_folder.iterdir(): #iterating all files in the directory "resume" folder
     if file_path.suffix.lower() not in [".pdf",".docx"]:
-        continue
+        continue                                            # Skipping if resume have other doc type then PDF/DOC
     print("\nProcessing:",file_path.name)
-    resume_text=read_resume(file_path)
-    parse_resume_result=parse_resume(resume_text)
-    time.sleep(5)
-    result=final_score(job,parse_resume_result)
-    time.sleep(5)
-    print("Score:",result.score)
-    all_results.append({     
+    resume_text=read_resume(file_path)  #Choosing func based on doc type
+    parse_resume_result=parse_resume(resume_text) # LLM call for parsing the resume text(raw) into JSON
+    time.sleep(5) # Break to prevent API request rate 
+    result=final_score(job,parse_resume_result) # Comparing parsed resume text (JSON) with JOB Description
+    time.sleep(5) # Break to prevent API request rate
+    print("Score:",result.score) #Priting final score individually
+    all_results.append({     #Storing all resume results
             "name":parse_resume_result.name,
             "score":result.score,
             "detail":result.detail
     })
-all_results.sort(key=lambda candidate:candidate["score"], reverse=True)
-top_2=all_results[:2]
-bottom_2=all_results[-2:]
+all_results.sort(key=lambda candidate:candidate["score"], reverse=True) # Sorting based on score
+top_2=all_results[:2] # Getting top 2 candidates
+bottom_2=all_results[-2:] # Getting bottom 2 Candidate
 
-print("Top 2 Candidate")
+print("Top 2 Candidate") # Printing Results of Top 2
 for candidate in top_2:
     print(
         candidate["name"],
@@ -316,7 +328,7 @@ for candidate in top_2:
     print(
         candidate["detail"]
     )
-print("Bottom 2 Candidate")
+print("Bottom 2 Candidate") # Printing Results of Top 2
 for candidate in bottom_2:
     print(
         candidate["name"],
