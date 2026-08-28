@@ -1,6 +1,17 @@
 # 🚀 AI-Powered Resume Analyzer & Scorer
-An automated, LLM-driven recruitment tool that extracts structured data from Job Descriptions (JDs) and candidate resumes to calculate a definitive matching score. Built with Python and the Groq API, this project demonstrates advanced prompting techniques, JSON schema enforcement using Pydantic, and automated document parsing.
 
+![Python](https://img.shields.io/badge/Python-3.11-blue.svg?logo=python&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-API-F37B60)
+![Pydantic](https://img.shields.io/badge/Pydantic-E92063?logo=pydantic&logoColor=white)
+![uv](https://img.shields.io/badge/uv-Package%20Manager-7C3AED)
+![PDF](https://img.shields.io/badge/PyPDF-Document%20Parsing-red?logo=adobeacrobatreader&logoColor=white)
+![DOCX](https://img.shields.io/badge/python--docx-2B579A?logo=microsoftword&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
+**Author:** Vivek Raghav  
+**Repository:** [vivekrajraghav/resume-analyzer](https://github.com/vivekrajraghav/resume-analyzer)  
+
+An automated, LLM-driven recruitment tool that extracts structured data from Job Descriptions (JDs) and candidate resumes to calculate a definitive matching score. Built with Python and the Groq API, this project demonstrates advanced prompting techniques, JSON schema enforcement using Pydantic, and automated document parsing.
 ## ✨ Features
 
 * **Intelligent Document Parsing:** Extracts text from both `.pdf` and `.docx` files seamlessly.
@@ -113,10 +124,11 @@ Processing: candidate_1.pdf
 Score: 85.0
 Processing: candidate_2.docx
 Score: 40.0
-```
+
 Top 2 Candidate
 John Doe - 85.0 %
 {'Missing Important skills': ['Hugging Face', 'Docker'], 'Overall match percentage': 85.0, 'Whether experience requirements is met': True, 'A short final verdict': 'Strong candidate with solid PyTorch and ML fundamentals, minor gaps in deployment tools.'}
+```
 ## 🧠 Code Highlights
 
 * **Pydantic Schemas:** Used to define `JD`, `experience`, `resume`, and `matchresult` classes. `.model_json_schema()` translates these Python classes into robust instructions for the LLM.
