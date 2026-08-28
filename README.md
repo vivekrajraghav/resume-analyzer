@@ -62,7 +62,7 @@ graph TD
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/vivekrajraghav/resume-analyzer.git](https://github.com/vivekrajraghav/resume-analyzer.git)
+git clone https://github.com/vivekrajraghav/resume-analyzer.git
 cd resume-analyzer
 
 ```
