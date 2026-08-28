@@ -1,0 +1,23 @@
+[project]
+name = "resume-analyzer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "vivek", email = "vivekrajraghav@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "docx>=0.2.4",
+    "groq>=1.7.0",
+    "pydantic>=2.13.4",
+    "pypdf>=6.16.2",
+    "python-dotenv>=1.2.3",
+]
+
+[project.scripts]
+resume-analyzer = "resume_analyzer:main"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13.0"]
+build-backend = "uv_build"
